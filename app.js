@@ -1,50 +1,42 @@
-'use strict';
+var createError = require('http-errors');
+var express = require('express');
+var path = require('path');
+var cookieParser = require('cookie-parser');
+var logger = require('morgan');
 
-// load modules
-const express = require('express');
-const morgan = require('morgan');
+var indexRouter = require('./routes/index');
+var apiRouter = require('./routes/api');
 
-// variable to enable global error logging
-const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
+var app = express();
 
-// create the Express app
-const app = express();
+// Setup request body JSON parsing.
+app.use(express.json());
 
-// setup morgan which gives us http request logging
-app.use(morgan('dev'));
+// Setup morgan which gives us HTTP request logging
+app.use(logger('dev'));
 
-// TODO setup your api routes here
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// setup a friendly greeting for the root route
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to the REST API project!',
-  });
-});
+app.use('/', indexRouter);
+app.use('/api', apiRouter);
 
-// send 404 if no other route matched
-app.use((req, res) => {
-  res.status(404).json({
-    message: 'Route Not Found',
-  });
-});
+// catch 404 and forward to error handler
+// app.use(function(req, res, next) {
+//   next(createError(404));
+// });
 
-// setup a global error handler
-app.use((err, req, res, next) => {
-  if (enableGlobalErrorLogging) {
-    console.error(`Global error handler: ${JSON.stringify(err.stack)}`);
-  }
+// error handler
+// app.use(function(err, req, res, next) {
+//   // set locals, only providing error in development
+//   res.locals.message = err.message;
+//   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  res.status(err.status || 500).json({
-    message: err.message,
-    error: {},
-  });
-});
+//   // render the error page
+//   res.status(err.status || 500);
+//   res.render('error');
+// });
 
-// set our port
-app.set('port', process.env.PORT || 5000);
-
-// start listening on our port
-const server = app.listen(app.get('port'), () => {
-  console.log(`Express server is listening on port ${server.address().port}`);
-});
+module.exports = app;
