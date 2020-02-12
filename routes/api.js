@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models').User;
+const { check, validationResult } = require('express-validator');
 const bcryptjs = require('bcryptjs');
 const auth = require('basic-auth');
 
@@ -30,7 +31,9 @@ const authenticateUser = async (req, res, next) => {
     // by their username (i.e. the user's "key")
     // from the Authorization header).
     const user = await User.findOne({
-      emailAddress: credentials.name,
+      where: {
+        emailAddress: credentials.name,
+      }
     });
 
     // If a user was successfully retrieved from the data store...
@@ -41,16 +44,16 @@ const authenticateUser = async (req, res, next) => {
       const authenticated = bcryptjs
         .compareSync(credentials.pass, user.password);
 
-        // If the passwords match...
-        if (authenticated) {
-          console.log(`Authentication successful for username: ${user.emailAddress}`);
-          // Then store the retrieved user object on the request object
-          // so any middleware functions that follow this middleware function
-          // will have access to the user's information.
-          req.currentUser = user;
-        } else {
-          message = `Authentication failure for username: ${user.emailAddress}`
-        }
+      // If the passwords match...
+      if (authenticated) {
+        console.log(`Authentication successful for username: ${user.emailAddress}`);
+        // Then store the retrieved user object on the request object
+        // so any middleware functions that follow this middleware function
+        // will have access to the user's information.
+        req.currentUser = user;
+      } else {
+        message = `Authentication failure for username: ${user.emailAddress}`
+      }
     } else {
       message = `User not found for username: ${user.emailAddress}`
     }
@@ -82,10 +85,43 @@ router.get('/', authenticateUser, asyncHandler(async (req, res) => {
 }));
 
 // Post new users
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', [
+  check('firstName')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a first name.'),
+  check('lastName')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a last name.'),
+  check('emailAddress')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide an email address'),
+  check('password')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please set a password.')
+], asyncHandler(async (req, res) => {
+  // Attempt to get the validation result from the Request object.
+  const errors = validationResult(req);
+
+  // If there are validation errors...
+  if (!errors.isEmpty()) {
+    // Use the Array 'map()' method to get a list of error messages.
+    const errorMessages = errors.array().map(error => error.msg);
+
+    // Return the validation errors to the client.
+    return res.status(400).json({ errors: errorMessages });
+  }
+
+  // Get the user from the request body.
   const user = req.body;
-  
-  User.create();
-}))
+
+  // Hash the new user's password.
+  user.password = bcryptjs.hashSync(user.password);
+
+  // Add the user to the 'Users' table.
+  await User.create(user);
+
+  // Set status to 201 user created!
+  res.status(201).end();
+}));
 
 module.exports = router;
