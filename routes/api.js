@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models').User;
+const Course = require('../models').Course;
 const { check, validationResult } = require('express-validator');
 const bcryptjs = require('bcryptjs');
 const auth = require('basic-auth');
@@ -75,7 +76,7 @@ const authenticateUser = async (req, res, next) => {
 
 
 // GET users listing. 
-router.get('/', authenticateUser, asyncHandler(async (req, res) => {
+router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
   const user = req.currentUser;
 
   res.json({
@@ -85,7 +86,7 @@ router.get('/', authenticateUser, asyncHandler(async (req, res) => {
 }));
 
 // Post new users
-router.post('/', [
+router.post('/users', [
   check('firstName')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a first name.'),
@@ -122,6 +123,17 @@ router.post('/', [
 
   // Set status to 201 user created!
   res.status(201).end();
+}));
+
+router.get('/courses', asyncHandler(async (req, res) => {
+  const courses = await Course.findAll();
+
+  res.json(courses);
+}));
+
+router.get('/courses/:id', asyncHandler(async (req, res) => {
+  const course = await Course.findByPk(req.params.id);
+  res.json(course);
 }));
 
 module.exports = router;

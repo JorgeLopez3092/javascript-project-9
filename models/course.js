@@ -28,15 +28,15 @@ module.exports = (sequelize) => {
         }
     }, { sequelize });
 
-    // Course.associate = (models) => {
-    //     Course.belongsTo(models.User, {
-    //         as: 'course',
-    //         foreignKey: {
-    //             fieldName: 'courseId',
-    //             allowNull: false,
-    //         },
-    //     });
-    // };
+    Course.associate = (models) => {
+        Course.belongsTo(models.User, {
+            as: 'course',
+            foreignKey: {
+                fieldName: 'courseId',
+                allowNull: false,
+            },
+        });
+    };
 
     return Course;
 };
