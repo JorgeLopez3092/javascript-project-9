@@ -125,15 +125,25 @@ router.post('/users', [
   res.status(201).end();
 }));
 
+// Get list of all courses
 router.get('/courses', asyncHandler(async (req, res) => {
   const courses = await Course.findAll();
 
   res.json(courses);
 }));
 
+// Get list of individual coursee
 router.get('/courses/:id', asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   res.json(course);
+}));
+
+router.post('/courses', [
+  check('firstName')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a first name.'),
+], asyncHandler(async (req, res) => {
+
 }));
 
 module.exports = router;
