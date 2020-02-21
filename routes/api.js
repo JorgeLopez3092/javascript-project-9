@@ -14,6 +14,10 @@ function asyncHandler(cb) {
     try {
       await cb(req, res, next)
     } catch (error) {
+      if (error.name === 'SequelizeValidationError') {
+        const errors = error.errors.map(err => err.message);
+        console.error('Validation errors: ', errors);
+      }
       res.status(500).send(error);
     }
   }
@@ -126,24 +130,94 @@ router.post('/users', [
 }));
 
 // Get list of all courses
-router.get('/courses', asyncHandler(async (req, res) => {
-  const courses = await Course.findAll();
+router.get('/courses', asyncHandler(async (req, res) => { 
+  // const courses = await Course.findAll({
+  //   include: [{
+  //     model: User,
+  //     as: 'userId'
+  //   }]
+  // });
 
-  res.json(courses);
+  // res.json(courses);.
+  try {
+    const courses = await Course.findAll({
+      include: [{
+        model: User,
+        as: 'userId'
+      }]
+    });
+  
+    res.json(courses);
+  } catch(err) {
+    console.log(err);
+    res.json(err);
+  }
 }));
 
 // Get list of individual coursee
 router.get('/courses/:id', asyncHandler(async (req, res) => {
-  const course = await Course.findByPk(req.params.id);
+  const course = await Course.findByPk(req.params.id, {
+    include: [{
+      model: User,
+      as: 'userId'
+    }]
+  });
   res.json(course);
 }));
 
+// Create a new course
 router.post('/courses', [
-  check('firstName')
+  check('title')
     .exists({ checkNull: true, checkFalsy: true })
-    .withMessage('Please provide a first name.'),
+    .withMessage('Please provide a title.'),
+  check('description')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a message.'),
+  check('userId')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a userId'),
 ], asyncHandler(async (req, res) => {
+// Attempt to get the validation result from the Request object.
+  const errors = validationResult(req);
 
+  // If there are validation errors...
+  if (!errors.isEmpty()) {
+    // Use the Array 'map()' method to get a list of error messages.
+    const errorMessages = errors.array().map(error => error.msg);
+
+    // Return the validation errors to the client.
+    return res.status(400).json({ errors: errorMessages });
+  }
+
+  // Get the user from the request body.
+  const course = req.body;
+
+  // Add the user to the 'Users' table.
+  await Course.create(course);
+
+  // Set status to 201 user created!
+  res.status(201).end();
 }));
 
+// Update a course
+router.put('/courses/:id', asyncHandler(async (req, res) => {
+    const course = await Course.findByPk(req.params.id);
+    if (course) {
+      await course.update(req.body);
+      res.status(204).end();
+    } else {
+      res.sendStatus(404);
+    }
+}));
+
+// Delete a course
+router.delete('/courses/:id', asyncHandler(async (req, res) => {
+  const course = await Course.findByPk(req.params.id);
+  if (course) {
+    await course.destroy();
+    res.status(204).end();
+  } else {
+    res.sendStatus(404);
+  }
+}))
 module.exports = router;
