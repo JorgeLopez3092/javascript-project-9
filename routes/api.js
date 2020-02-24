@@ -130,7 +130,7 @@ router.post('/users', [
 }));
 
 // Get list of all courses
-router.get('/courses', asyncHandler(async (req, res) => { 
+router.get('/courses', authenticateUser, asyncHandler(async (req, res) => { 
   // const courses = await Course.findAll({
   //   include: [{
   //     model: User,
@@ -141,10 +141,12 @@ router.get('/courses', asyncHandler(async (req, res) => {
   // res.json(courses);.
   try {
     const courses = await Course.findAll({
-      include: [{
-        model: User,
-        as: 'userId'
-      }]
+      include: [
+        {
+          model: User,
+          as: 'teacher',
+        }
+      ]
     });
   
     res.json(courses);
@@ -155,12 +157,12 @@ router.get('/courses', asyncHandler(async (req, res) => {
 }));
 
 // Get list of individual coursee
-router.get('/courses/:id', asyncHandler(async (req, res) => {
+router.get('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id, {
-    include: [{
+    include: {
       model: User,
-      as: 'userId'
-    }]
+      as: 'teacher'
+    }
   });
   res.json(course);
 }));
@@ -172,11 +174,11 @@ router.post('/courses', [
     .withMessage('Please provide a title.'),
   check('description')
     .exists({ checkNull: true, checkFalsy: true })
-    .withMessage('Please provide a message.'),
+    .withMessage('Please provide a descriptiondes.'),
   check('userId')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a userId'),
-], asyncHandler(async (req, res) => {
+], authenticateUser, asyncHandler(async (req, res) => {
 // Attempt to get the validation result from the Request object.
   const errors = validationResult(req);
 
@@ -200,7 +202,7 @@ router.post('/courses', [
 }));
 
 // Update a course
-router.put('/courses/:id', asyncHandler(async (req, res) => {
+router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
     const course = await Course.findByPk(req.params.id);
     if (course) {
       await course.update(req.body);
@@ -211,7 +213,7 @@ router.put('/courses/:id', asyncHandler(async (req, res) => {
 }));
 
 // Delete a course
-router.delete('/courses/:id', asyncHandler(async (req, res) => {
+router.delete('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   if (course) {
     await course.destroy();
