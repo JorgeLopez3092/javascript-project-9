@@ -29,7 +29,6 @@ const authenticateUser = asyncHandler(async (req, res, next) => {
 
   // Parse the user's credentials from the Authorization header.
   const credentials = auth(req);
-
   // If the user's credentials are available...
   if (credentials) {
     // Attempt to retrieve the user from the data store
@@ -60,7 +59,7 @@ const authenticateUser = asyncHandler(async (req, res, next) => {
         message = `Authentication failure for username: ${user.emailAddress}`
       }
     } else {
-      message = `User not found for username: ${user.emailAddress}`
+      message = `User not found for username: ${credentials.name}`
     }
   } else {
     message = 'Auth header not found';
