@@ -24,6 +24,7 @@ localhost:5000/api/courses
 However, all interactions are locked behind an authenticator (basic-auth), so you'll need to use the Authorization tab in Postman.  First select 'Basic Auth' from the 'Type' drop down menu and then you'll need to fill out the form to the right.
 
 There are 2 initial logins you can use to start interacting.
+
 Username: joe@smith.com
 Password: joepassword
 
