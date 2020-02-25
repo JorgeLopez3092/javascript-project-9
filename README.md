@@ -37,7 +37,7 @@ Please note that usernames are case sensitive at the moment.  Will make them cas
 
 Once you have the username and password entered in the proper fields, you can start navigating.
 
-#Routes
+# Routes
 
 GET localhost:5000/api/users will the full name and username of the authenticated account.
 
