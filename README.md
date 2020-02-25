@@ -33,19 +33,46 @@ Password: joepassword
 Username: sally@jones.com
 Password: sallypassword
 
+Please note that usernames are case sensitive at the moment.  Will make them case insensitive soon
+
 Once you have the username and password entered in the proper fields, you can start navigating.
+
+#Routes
 
 GET localhost:5000/api/users will the full name and username of the authenticated account.
 
 GET localhost:5000/api/courses will return all courses that currently exist in the database along with the related teacher (user) from the Users table.
 
-POST localhost:5000/api/users will allow you to pass in a JSON object that will creat a new user in the database.  All fields are required for POSTing a usrename.  Here is the structure
+POST localhost:5000/api/users will allow you to pass in a JSON object that will create a new user in the database.  All fields are required for POSTing a username.  Here is the structure:
 
 ```
 {
-   "firstName": STRING,
-   "lastName": STRING,
-   "emailAddress": STRING,
-   "password": STRING
+   "firstName": STRING, (required)
+   "lastName": STRING, (required)
+   "emailAddress": STRING, (required)
+   "password": STRING (required)
 }
 ```
+
+POST localhost:5000/api/courses will allow you to pass in a JSON object that will create a new course in the database.  Some fields are required and some are optional.  Here is the structure.
+
+```
+{
+   "title": STRING, (required)
+   "description": TEXT, (required)
+   "estimatedTime": STRING, (optional)
+   "materialsNeeded": STRING, (optional)
+   "userId": INTEGER (required. And it must be an existing ID for an entry in the Users table.  This is the foreignKey to the User's primary key)
+}
+```
+
+PUT localhost:5000/api/courses/:id will allow you to update the course with the id passed into the route.  There are no required fields here, only the properties that need to be updated should be passed into the JSON object here.  For example, if I only wanted to update the description, then here is what my JSON object would look like.
+
+```
+{
+   "description": STRING
+}
+```
+DELETE localhost:5000/api/courses/:id will allow you to delete the course, with the id passed into the route, from the database.
+
+This is my practice work in progress API. =]
