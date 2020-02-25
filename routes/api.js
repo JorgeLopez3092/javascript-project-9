@@ -24,7 +24,7 @@ function asyncHandler(cb) {
 }
 
 
-const authenticateUser = async (req, res, next) => {
+const authenticateUser = asyncHandler(async (req, res, next) => {
   let message = null;
 
   // Parse the user's credentials from the Authorization header.
@@ -76,7 +76,7 @@ const authenticateUser = async (req, res, next) => {
     // Call the next() method.
     next();
   }
-}
+});
 
 
 // GET users listing. 
