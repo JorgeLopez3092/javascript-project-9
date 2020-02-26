@@ -125,19 +125,12 @@ router.post('/users', [
   await User.create(user);
 
   // Set status to 201 user created!
+  res.location('/');
   res.status(201).end();
 }));
 
 // Get list of all courses
-router.get('/courses', authenticateUser, asyncHandler(async (req, res) => { 
-  // const courses = await Course.findAll({
-  //   include: [{
-  //     model: User,
-  //     as: 'userId'
-  //   }]
-  // });
-
-  // res.json(courses);.
+router.get('/courses', asyncHandler(async (req, res) => { 
   try {
     const courses = await Course.findAll({
       include: [
@@ -156,7 +149,7 @@ router.get('/courses', authenticateUser, asyncHandler(async (req, res) => {
 }));
 
 // Get list of individual coursee
-router.get('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
+router.get('/courses/:id', asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id, {
     include: {
       model: User,
@@ -177,7 +170,7 @@ router.post('/courses', [
   check('userId')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a userId'),
-], authenticateUser, asyncHandler(async (req, res) => {
+], asyncHandler(async (req, res) => {
 // Attempt to get the validation result from the Request object.
   const errors = validationResult(req);
 
@@ -194,14 +187,35 @@ router.post('/courses', [
   const course = req.body;
 
   // Add the user to the 'Users' table.
+  console.log(course);
   await Course.create(course);
 
+  // Grab id of newly created course
+  const newCourse = await Course.findOne({
+    where: {
+      title: req.body.title,
+      description: req.body.description,
+      userId: req.body.userId
+    }
+  });
+  console.log(newCourse)
   // Set status to 201 user created!
+  res.location(`/courses/${newCourse.id}`)
   res.status(201).end();
 }));
 
 // Update a course
-router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
+router.put('/courses/:id', [
+  check('title')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a title.'),
+  check('description')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a descriptiondes.'),
+  check('userId')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a userId'),
+], asyncHandler(async (req, res) => {
     const course = await Course.findByPk(req.params.id);
     if (course) {
       await course.update(req.body);
