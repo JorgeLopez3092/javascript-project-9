@@ -130,7 +130,7 @@ router.post('/users', [
 }));
 
 // Get list of all courses
-router.get('/courses', asyncHandler(async (req, res) => { 
+router.get('/courses', asyncHandler(async (req, res) => {
   try {
     const courses = await Course.findAll({
       include: [
@@ -140,9 +140,25 @@ router.get('/courses', asyncHandler(async (req, res) => {
         }
       ]
     });
-  
-    res.json(courses);
-  } catch(err) {
+    res.json(courses.map(course => {
+      const container = {};
+      const teacherContainer = {};
+      teacherContainer.id = course.teacher.id;
+      teacherContainer.firstName = course.teacher.firstName;
+      teacherContainer.lastName = course.teacher.lastName;
+      teacherContainer.emailAddress = course.teacher.emailAddress;
+
+      container.title = course.id;
+      container.description = course.description;
+      container.estimatedTime = course.estimatedTime;
+      container.materialsNeeded = course.materialsNeeded;
+      container.userId = course.userId;
+      container.teacher = teacherContainer;
+
+      return container
+    }))
+
+  } catch (err) {
     console.log(err);
     res.json(err);
   }
@@ -170,8 +186,8 @@ router.post('/courses', [
   check('userId')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a userId'),
-], asyncHandler(async (req, res) => {
-// Attempt to get the validation result from the Request object.
+], authenticateUser, asyncHandler(async (req, res) => {
+  // Attempt to get the validation result from the Request object.
   const errors = validationResult(req);
 
   // If there are validation errors...
@@ -215,22 +231,39 @@ router.put('/courses/:id', [
   check('userId')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a userId'),
-], asyncHandler(async (req, res) => {
-    const course = await Course.findByPk(req.params.id);
-    if (course) {
-      await course.update(req.body);
-      res.status(204).end();
-    } else {
-      res.sendStatus(404);
-    }
+], authenticateUser, asyncHandler(async (req, res) => {
+  // Attempt to get the validation result from the Request object.
+  const errors = validationResult(req);
+
+  // If there are validation errors...
+  if (!errors.isEmpty()) {
+    // Use the Array 'map()' method to get a list of error messages.
+    const errorMessages = errors.array().map(error => error.msg);
+
+    // Return the validation errors to the client.
+    return res.status(400).json({ errors: errorMessages });
+  }
+  const course = await Course.findByPk(req.params.id);
+  if (course) {
+    await course.update(req.body);
+    res.status(204).end();
+  } else {
+    res.sendStatus(404);
+  }
 }));
 
 // Delete a course
 router.delete('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
+  const user = req.currentUser;
   const course = await Course.findByPk(req.params.id);
+  console.log(user.id, course.userId);
   if (course) {
-    await course.destroy();
-    res.status(204).end();
+    if (user.id === course.userId) {
+      await course.destroy();
+      res.status(204).end();
+    } else {
+      res.sendStatus(403);
+    }
   } else {
     res.sendStatus(404);
   }
