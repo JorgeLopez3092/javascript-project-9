@@ -172,7 +172,20 @@ router.get('/courses/:id', asyncHandler(async (req, res) => {
       as: 'teacher'
     }
   });
-  res.json(course);
+  const container = {};
+      const teacherContainer = {};
+      teacherContainer.id = course.teacher.id;
+      teacherContainer.firstName = course.teacher.firstName;
+      teacherContainer.lastName = course.teacher.lastName;
+      teacherContainer.emailAddress = course.teacher.emailAddress;
+
+      container.title = course.id;
+      container.description = course.description;
+      container.estimatedTime = course.estimatedTime;
+      container.materialsNeeded = course.materialsNeeded;
+      container.userId = course.userId;
+      container.teacher = teacherContainer;
+  res.json(container);
 }));
 
 // Create a new course
