@@ -14,11 +14,13 @@ function asyncHandler(cb) {
     try {
       await cb(req, res, next)
     } catch (error) {
-      if (error.name === 'SequelizeValidationError') {
+      if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
         const errors = error.errors.map(err => err.message);
         console.error('Validation errors: ', errors);
+        res.status(400).send(error);
+      } else {
+        res.status(500).send(error);
       }
-      res.status(500).send(error);
     }
   }
 }
@@ -173,18 +175,18 @@ router.get('/courses/:id', asyncHandler(async (req, res) => {
     }
   });
   const container = {};
-      const teacherContainer = {};
-      teacherContainer.id = course.teacher.id;
-      teacherContainer.firstName = course.teacher.firstName;
-      teacherContainer.lastName = course.teacher.lastName;
-      teacherContainer.emailAddress = course.teacher.emailAddress;
+  const teacherContainer = {};
+  teacherContainer.id = course.teacher.id;
+  teacherContainer.firstName = course.teacher.firstName;
+  teacherContainer.lastName = course.teacher.lastName;
+  teacherContainer.emailAddress = course.teacher.emailAddress;
 
-      container.title = course.id;
-      container.description = course.description;
-      container.estimatedTime = course.estimatedTime;
-      container.materialsNeeded = course.materialsNeeded;
-      container.userId = course.userId;
-      container.teacher = teacherContainer;
+  container.title = course.id;
+  container.description = course.description;
+  container.estimatedTime = course.estimatedTime;
+  container.materialsNeeded = course.materialsNeeded;
+  container.userId = course.userId;
+  container.teacher = teacherContainer;
   res.json(container);
 }));
 
@@ -256,10 +258,15 @@ router.put('/courses/:id', [
     // Return the validation errors to the client.
     return res.status(400).json({ errors: errorMessages });
   }
+  const user = req.currentUser;
   const course = await Course.findByPk(req.params.id);
   if (course) {
-    await course.update(req.body);
-    res.status(204).end();
+    if (user.id === course.userId) {
+      await course.update(req.body);
+      res.status(204).end();
+    } else {
+      res.sendStatus(403);
+    }
   } else {
     res.sendStatus(404);
   }
