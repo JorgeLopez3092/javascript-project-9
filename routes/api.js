@@ -261,6 +261,7 @@ router.put('/courses/:id', [
   const user = req.currentUser;
   const course = await Course.findByPk(req.params.id);
   if (course) {
+    // Checks that the authenticated user is the owner of the course being edited
     if (user.id === course.userId) {
       await course.update(req.body);
       res.status(204).end();
@@ -278,6 +279,7 @@ router.delete('/courses/:id', authenticateUser, asyncHandler(async (req, res) =>
   const course = await Course.findByPk(req.params.id);
   console.log(user.id, course.userId);
   if (course) {
+    // Checks that the authenticated user is the owner of the course being edited
     if (user.id === course.userId) {
       await course.destroy();
       res.status(204).end();
